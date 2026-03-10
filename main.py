@@ -1,7 +1,9 @@
 import os
+import asyncio
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+from aiohttp import web
 from db_manager import DiscordDB
 from cogs.economy import Economy
 from cogs.admin import Admin
@@ -31,6 +33,18 @@ class MultiGuildBot(commands.Bot):
 
 bot = MultiGuildBot()
 
+async def health_check(request):
+    return web.Response(text="Bot is running")
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get("/", health_check)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", int(os.getenv("PORT", 10000)))
+    await site.start()
+    print(f"Web server started on port {os.getenv('PORT', 10000)}")
+
 @bot.event
 async def on_ready():
     try:
@@ -39,8 +53,19 @@ async def on_ready():
     except Exception as e:
         print(e)
 
-if __name__ == "__main__":
-    if TOKEN:
-        bot.run(TOKEN)
-    else:
+async def main():
+    if not TOKEN:
         print("Please provide a DISCORD_TOKEN in the environment variables.")
+        return
+
+    # Start the web server for health checks (Render requirement for Web Services)
+    asyncio.create_task(start_web_server())
+
+    async with bot:
+        await bot.start(TOKEN)
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass

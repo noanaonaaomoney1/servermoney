@@ -7,4 +7,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Use -u for unbuffered logging
 CMD ["python", "-u", "main.py"]

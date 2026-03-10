@@ -1,0 +1,35 @@
+2026-03-10 22:29:48,016 - discord.client - WARNING - PyNaCl is not installed, voice will NOT be supported
+2026-03-10 22:29:48,016 - discord.client - WARNING - davey is not installed, voice will NOT be supported
+INFO:     Started server process [6350]
+INFO:     Waiting for application startup.
+2026-03-10 22:29:48,048 - MultiGuildBot - INFO - Discord bot background task started.
+2026-03-10 22:29:48,048 - discord.client - INFO - logging in using static token
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:10000 (Press CTRL+C to quit)
+2026-03-10 22:29:48,185 - asyncio - ERROR - Task exception was never retrieved
+future: <Task finished name='Task-3' coro=<Client.start() done, defined at /home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/discord/client.py:829> exception=LoginFailure('Improper token has been passed.')>
+Traceback (most recent call last):
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/discord/http.py", line 844, in static_login
+    data = await self.request(Route('GET', '/users/@me'))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/discord/http.py", line 778, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 401 Unauthorized (error code: 0): 401: Unauthorized
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/discord/client.py", line 850, in start
+    await self.login(token)
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/discord/client.py", line 679, in login
+    data = await self.http.static_login(token)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/discord/http.py", line 848, in static_login
+    raise LoginFailure('Improper token has been passed.') from exc
+discord.errors.LoginFailure: Improper token has been passed.
+INFO:     127.0.0.1:47730 - "GET / HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-10 22:29:49,962 - MultiGuildBot - INFO - Shutting down...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [6350]

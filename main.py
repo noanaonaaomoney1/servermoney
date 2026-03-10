@@ -2,10 +2,14 @@ import os
 import asyncio
 import discord
 import logging
+from contextlib import asynccontextmanager
 from discord import app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
-from aiohttp import web
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+import uvicorn
+
 from db_manager import DiscordDB
 from cogs.economy import Economy
 from cogs.admin import Admin
@@ -56,37 +60,60 @@ class MultiGuildBot(commands.Bot):
 
 bot = MultiGuildBot()
 
-async def health_check(request):
-    return web.Response(text="Bot is running")
-
-async def start_web_server():
-    port = int(os.getenv("PORT", 10000))
-    app = web.Application()
-    app.router.add_get("/", health_check)
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", port)
-    await site.start()
-    logger.info(f"Web server started on port {port}")
-
-async def main():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Start the bot as a background task
     if not TOKEN:
         logger.error("Please provide a DISCORD_TOKEN in the environment variables.")
-        return
+    else:
+        asyncio.create_task(bot.start(TOKEN))
+        logger.info("Discord bot background task started.")
 
-    # Start the web server for health checks (Render requirement for Web Services)
-    await start_web_server()
+    yield
 
-    async with bot:
-        try:
-            await bot.start(TOKEN)
-        except Exception as e:
-            logger.error(f"Bot failed to start: {e}", exc_info=True)
+    # Shutdown
+    logger.info("Shutting down...")
+    await bot.close()
+
+app = FastAPI(lifespan=lifespan)
+
+@app.get("/", response_class=HTMLResponse)
+async def read_root():
+    status = "Online" if not bot.is_closed() else "Offline"
+    try:
+        latency = round(bot.latency * 1000) if not bot.is_closed() and bot.latency is not None and not (isinstance(bot.latency, float) and bot.latency != bot.latency) else "N/A"
+    except (ValueError, TypeError):
+        latency = "N/A"
+
+    html_content = f"""
+    <html>
+        <head>
+            <title>MultiGuildBot Status</title>
+            <style>
+                body {{ font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background-color: #2c2f33; color: white; }}
+                .card {{ background: #23272a; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); text-align: center; }}
+                h1 {{ color: #7289da; }}
+                .status {{ font-size: 1.5rem; margin: 1rem 0; }}
+                .online {{ color: #43b581; }}
+                .offline {{ color: #f04747; }}
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <h1>Multi-Guild Economy Bot</h1>
+                <p class="status">Status: <span class="{status.lower()}">{status}</span></p>
+                <p>Latency: {latency}ms</p>
+                <p>Bot is running as a FastAPI web application.</p>
+            </div>
+        </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content, status_code=200)
+
+@app.get("/health")
+async def health():
+    return {{"status": "ok", "bot_online": not bot.is_closed()}}
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logger.info("Shutting down...")
-    except Exception as e:
-        logger.critical(f"Unexpected error: {e}", exc_info=True)
+    port = int(os.getenv("PORT", 10000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, log_level="info")

@@ -23,11 +23,16 @@ class MultiGuildBot(commands.Bot):
         self.db = DiscordDB(self)
 
     async def setup_hook(self):
-        await self.add_cog(Economy(self, self.db))
-        await self.add_cog(Admin(self, self.db))
-        await self.add_cog(Shop(self, self.db))
-        await self.add_cog(Fun(self, self.db))
-        await self.add_cog(Leveling(self, self.db))
+        try:
+            await self.add_cog(Economy(self, self.db))
+            await self.add_cog(Admin(self, self.db))
+            await self.add_cog(Shop(self, self.db))
+            await self.add_cog(Fun(self, self.db))
+            await self.add_cog(Leveling(self, self.db))
+            print("Successfully loaded all cogs.")
+        except Exception as e:
+            print(f"Error loading cogs: {e}")
+
         print(f"Logged in as {self.user} (ID: {self.user.id})")
         print("------")
 

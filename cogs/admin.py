@@ -1,4 +1,5 @@
 import discord
+import datetime
 from discord import app_commands
 from discord.ext import commands
 from typing import Optional
@@ -70,7 +71,6 @@ class Admin(commands.Cog):
         new_balance = user_data["balance"] + amount
         self.db.update_user_data(interaction.guild_id, user.id, {"balance": new_balance})
 
-        import datetime
         await self.db.log_audit(interaction.guild_id, {
             "actor_id": interaction.user.id,
             "action": "give_currency",

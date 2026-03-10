@@ -30,7 +30,6 @@ class Leveling(commands.Cog):
         guild_id = message.guild.id
 
         # Simple cooldown to prevent spamming XP
-        import time
         now = time.time()
         last_gain = self.cooldowns.get(user_id, 0)
         if now - last_gain < 60: # 1 minute cooldown per user
